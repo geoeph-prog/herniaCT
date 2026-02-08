@@ -1,0 +1,28 @@
+{
+  "name": "hernia-ct-dicom-viewer",
+  "version": "1.0.0",
+  "description": "One-click DICOM medical image viewer powered by dwv",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite --open"
+  },
+  "dependencies": {
+    "dwv": "^0.36.0",
+    "@mui/material": "^6.4.0",
+    "@mui/icons-material": "^6.4.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.0",
+    "vite": "^6.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
