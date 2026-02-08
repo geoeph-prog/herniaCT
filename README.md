@@ -1,12 +1,13 @@
 # HerniaCT - DICOM Medical Image Viewer
 
-A user-friendly DICOM medical image viewer with one-click install and one-click start. Built on [dwv](https://github.com/ivmartel/dwv) (DICOM Web Viewer).
+A user-friendly DICOM medical image viewer with one-click install and one-click start.
+Built on [dwv](https://github.com/ivmartel/dwv) (DICOM Web Viewer) - the actual dwv source code is included directly.
 
 **Not intended for clinical diagnostic use.**
 
 ## Quick Start
 
-### 1. Install (one time)
+### 1. Install (one time only)
 
 **macOS / Linux:**
 ```bash
@@ -16,9 +17,9 @@ A user-friendly DICOM medical image viewer with one-click install and one-click 
 **Windows:**
 Double-click `install.bat`
 
-> Requires [Node.js 18+](https://nodejs.org). The installer will check and guide you if it's missing.
+> Requires [Node.js 18+](https://nodejs.org). The installer checks and guides you if it's missing.
 
-### 2. Start
+### 2. Start (every time)
 
 **macOS / Linux:**
 ```bash
@@ -29,22 +30,24 @@ Double-click `install.bat`
 Double-click `start.bat`
 
 The viewer opens automatically in your browser at `http://localhost:3000`.
+If dependencies aren't installed yet, the start script runs the installer automatically.
 
-## Features
+## How to Use
 
-- **Open DICOM files** - Click "Browse Files" or drag and drop `.dcm` files onto the viewer
-- **Scroll** - Scroll through CT/MRI slices
-- **Window/Level** - Adjust brightness and contrast (click and drag)
-- **Zoom & Pan** - Zoom in/out and pan the image
-- **Annotations** - Draw rulers, arrows, circles, ellipses, rectangles, and freehand
-- **MPR Views** - Switch between axial, coronal, and sagittal orientations
-- **DICOM Tags** - Inspect all DICOM metadata with search
-- **Patient Info Overlay** - Shows patient name, modality, and study info
-- **Keyboard Shortcuts** - Standard dwv keyboard shortcuts supported
+1. Click **Choose File** to load DICOM files (.dcm) from your computer
+2. Use the **tools** panel to switch between:
+   - **Scroll** - scroll through CT/MRI slices
+   - **WindowLevel** - adjust brightness/contrast (click + drag)
+   - **ZoomAndPan** - zoom and pan the image
+   - **Draw** - annotate with rulers, arrows, shapes
+   - **Brush / Floodfill / Livewire** - segmentation tools
+   - **Filter** - image filters
+3. Use **Layout** dropdown to switch between single view, dual view, or MPR
+4. **Reset Views** to return to the default layout
 
 ## Supported Formats
 
-Supports standard DICOM files including:
+Standard DICOM files including:
 - CT (Computed Tomography)
 - MRI (Magnetic Resonance Imaging)
 - X-Ray / CR (Computed Radiography)
@@ -54,9 +57,13 @@ Supports standard DICOM files including:
 
 ## Requirements
 
-- [Node.js](https://nodejs.org) 18 or later
+- [Node.js](https://nodejs.org) 18 or later (includes npm)
 - A modern web browser (Chrome, Firefox, Edge, Safari)
+
+## Credits
+
+This viewer is built on [dwv](https://github.com/ivmartel/dwv) by ivmartel, licensed under GPL-3.0.
 
 ## License
 
-This project uses [dwv](https://github.com/ivmartel/dwv) which is licensed under GPL-3.0.
+GPL-3.0 (same as dwv)

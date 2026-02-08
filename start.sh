@@ -17,17 +17,16 @@ echo ""
 echo -e "${CYAN}${BOLD}  HerniaCT DICOM Viewer${RESET}"
 echo ""
 
-# Check if node_modules exists
+# Auto-install if needed
 if [ ! -d "node_modules" ]; then
-    echo -e "  ${RED}Dependencies not installed.${RESET}"
-    echo -e "  Running installer first..."
+    echo -e "  ${RED}Dependencies not installed. Running installer...${RESET}"
     echo ""
     bash "$SCRIPT_DIR/install.sh"
 fi
 
 echo -e "  ${GREEN}Starting viewer...${RESET}"
-echo -e "  The viewer will open in your browser at ${CYAN}http://localhost:3000${RESET}"
-echo -e "  Press ${BOLD}Ctrl+C${RESET} to stop the server."
+echo -e "  Opens in your browser at ${CYAN}http://localhost:3000${RESET}"
+echo -e "  Press ${BOLD}Ctrl+C${RESET} to stop."
 echo ""
 
 npm start

@@ -8,7 +8,6 @@ echo   HerniaCT DICOM Viewer - Installer
 echo   =====================================
 echo.
 
-:: Get the directory of this script
 cd /d "%~dp0"
 
 :: ---------- Check for Node.js ----------
@@ -39,7 +38,7 @@ where npm >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo.
     echo   ERROR: npm is not installed.
-    echo   It usually comes with Node.js. Please reinstall Node.js.
+    echo   Please reinstall Node.js from https://nodejs.org
     echo.
     pause
     exit /b 1
@@ -57,7 +56,7 @@ call npm install
 if %ERRORLEVEL% neq 0 (
     echo.
     echo   ERROR: Failed to install dependencies.
-    echo   Please check the error messages above and try again.
+    echo   Check the error messages above and try again.
     echo.
     pause
     exit /b 1
@@ -66,9 +65,6 @@ if %ERRORLEVEL% neq 0 (
 echo.
 echo   Installation complete!
 echo.
-echo   To start the viewer, double-click:
-echo     start.bat
-echo.
-echo   Or run: npm start
+echo   To start the viewer, double-click: start.bat
 echo.
 pause
