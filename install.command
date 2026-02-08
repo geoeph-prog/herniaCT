@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # HerniaCT DICOM Viewer - One-Click Installer
+# Double-click this file on macOS to run. On Linux, run: bash install.command
 # =============================================================================
 set -e
 
@@ -16,7 +17,7 @@ echo -e "${CYAN}${BOLD}  HerniaCT DICOM Viewer - Installer${RESET}"
 echo -e "  ====================================="
 echo ""
 
-# Get the directory where this script lives
+# cd to the folder this script is in (handles double-click from Finder)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
@@ -27,7 +28,6 @@ if command -v node &>/dev/null; then
     NODE_VERSION=$(node --version)
     echo -e "  ${GREEN}Found Node.js ${NODE_VERSION}${RESET}"
 
-    # Check minimum version (18+)
     MAJOR=$(echo "$NODE_VERSION" | sed 's/v//' | cut -d. -f1)
     if [ "$MAJOR" -lt 18 ]; then
         echo -e "  ${YELLOW}Warning: Node.js 18+ is recommended. You have ${NODE_VERSION}${RESET}"
@@ -39,6 +39,7 @@ if command -v node &>/dev/null; then
         echo ""
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             echo -e "  ${RED}Installation cancelled.${RESET}"
+            echo ""; read -p "Press Enter to close..."
             exit 1
         fi
     fi
@@ -53,6 +54,7 @@ else
     echo -e "    Ubuntu/Debian:     ${CYAN}curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs${RESET}"
     echo -e "    nvm (any OS):      ${CYAN}nvm install 20${RESET}"
     echo ""
+    echo ""; read -p "Press Enter to close..."
     exit 1
 fi
 
@@ -65,6 +67,7 @@ if command -v npm &>/dev/null; then
 else
     echo -e "  ${RED}npm not found. It usually comes with Node.js.${RESET}"
     echo -e "  Please reinstall Node.js from ${CYAN}https://nodejs.org${RESET}"
+    echo ""; read -p "Press Enter to close..."
     exit 1
 fi
 
@@ -77,6 +80,6 @@ npm install
 echo ""
 echo -e "${GREEN}${BOLD}  Installation complete!${RESET}"
 echo ""
-echo -e "  To start the viewer, run:"
-echo -e "    ${CYAN}./start.sh${RESET}"
+echo -e "  To start the viewer, double-click: ${CYAN}start.command${RESET}"
 echo ""
+read -p "Press Enter to close..."
