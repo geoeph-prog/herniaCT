@@ -716,6 +716,32 @@ function setupFileLine() {
       throw new Error('No files to load');
     }
   });
+
+  // bind app to folder input
+  const folderinput = document.getElementById('folderinput');
+  if (folderinput) {
+    folderinput.addEventListener('change', function (event) {
+      const files = event.target.files;
+      if (files.length !== 0) {
+        // filter to only DICOM files (no extension or .dcm)
+        const dicomFiles = Array.from(files).filter(function (file) {
+          const name = file.name.toLowerCase();
+          return !name.startsWith('.') && (
+            name.endsWith('.dcm') ||
+            name.endsWith('.dicom') ||
+            name.endsWith('.ima') ||
+            !name.includes('.')
+          );
+        });
+        if (dicomFiles.length !== 0) {
+          _app.loadFiles(dicomFiles);
+        } else {
+          // try loading all files if no obvious DICOM files found
+          _app.loadFiles(files);
+        }
+      }
+    });
+  }
 }
 
 /**
