@@ -241,9 +241,11 @@ function viewerSetup() {
 
   // bind events
   _app.addEventListener('error', function (event) {
-    console.error('load error', event, event.error);
-    const message = event.error.message;
-    const isRenderError = typeof message !== 'undefined' &&
+    console.error('load error', event);
+    const error = event.error;
+    const message = error && error.message ? error.message :
+      (typeof error === 'string' ? error : 'Unknown error');
+    const isRenderError = typeof message === 'string' &&
       message.startsWith('Render error');
     // abort load
     if (!isRenderError) {
@@ -723,21 +725,41 @@ function setupFileLine() {
     folderinput.addEventListener('change', function (event) {
       const files = event.target.files;
       if (files.length !== 0) {
-        // filter to only DICOM files (no extension or .dcm)
-        const dicomFiles = Array.from(files).filter(function (file) {
+        // skip known non-DICOM files
+        const skipNames = [
+          '.ds_store', 'thumbs.db', 'desktop.ini', '.gitkeep'
+        ];
+        const skipExtensions = [
+          '.txt', '.xml', '.json', '.csv', '.log', '.md',
+          '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff',
+          '.pdf', '.doc', '.docx', '.html', '.htm',
+          '.exe', '.dll', '.bat', '.sh', '.py', '.js'
+        ];
+        const allFiles = Array.from(files);
+        const dicomFiles = allFiles.filter(function (file) {
           const name = file.name.toLowerCase();
-          return !name.startsWith('.') && (
-            name.endsWith('.dcm') ||
-            name.endsWith('.dicom') ||
-            name.endsWith('.ima') ||
-            !name.includes('.')
-          );
+          // skip hidden files
+          if (name.startsWith('.')) {
+            return false;
+          }
+          // skip known non-DICOM filenames
+          if (skipNames.indexOf(name) !== -1) {
+            return false;
+          }
+          // skip known non-DICOM extensions
+          const dotIndex = name.lastIndexOf('.');
+          if (dotIndex !== -1) {
+            const ext = name.substring(dotIndex);
+            if (skipExtensions.indexOf(ext) !== -1) {
+              return false;
+            }
+          }
+          return true;
         });
         if (dicomFiles.length !== 0) {
           _app.loadFiles(dicomFiles);
         } else {
-          // try loading all files if no obvious DICOM files found
-          _app.loadFiles(files);
+          _app.loadFiles(allFiles);
         }
       }
     });
