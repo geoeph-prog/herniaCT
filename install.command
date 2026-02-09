@@ -5,6 +5,14 @@
 # =============================================================================
 set -e
 
+# -- Fix PATH for macOS Finder launch (double-click) --
+# Finder doesn't load .bashrc/.zshrc, so node/npm may not be in PATH.
+export PATH="/usr/local/bin:/opt/homebrew/bin:$HOME/.nvm/versions/node/$(ls "$HOME/.nvm/versions/node/" 2>/dev/null | sort -V | tail -1)/bin:$PATH" 2>/dev/null
+# Load nvm if available
+[ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh" 2>/dev/null
+# Load user shell profile as fallback
+[ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc" 2>/dev/null || [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc" 2>/dev/null || true
+
 BOLD='\033[1m'
 CYAN='\033[36m'
 GREEN='\033[32m'
@@ -17,7 +25,7 @@ echo -e "${CYAN}${BOLD}  HerniaCT DICOM Viewer - Installer${RESET}"
 echo -e "  ====================================="
 echo ""
 
-# cd to the folder this script is in (handles double-click from Finder)
+# cd to the folder this script is in
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
@@ -33,7 +41,6 @@ if command -v node &>/dev/null; then
         echo -e "  ${YELLOW}Warning: Node.js 18+ is recommended. You have ${NODE_VERSION}${RESET}"
         echo ""
         echo -e "  To update, visit: ${CYAN}https://nodejs.org${RESET}"
-        echo -e "  Or use nvm:       ${CYAN}nvm install 20${RESET}"
         echo ""
         read -p "  Continue anyway? (y/N) " -n 1 -r
         echo ""
@@ -49,12 +56,9 @@ else
     echo -e "  Please install Node.js 18 or later from:"
     echo -e "    ${CYAN}https://nodejs.org/en/download/${RESET}"
     echo ""
-    echo -e "  Quick install:"
-    echo -e "    macOS (Homebrew):  ${CYAN}brew install node${RESET}"
-    echo -e "    Ubuntu/Debian:     ${CYAN}curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs${RESET}"
-    echo -e "    nvm (any OS):      ${CYAN}nvm install 20${RESET}"
+    echo -e "  After installing, close this window and double-click install.command again."
     echo ""
-    echo ""; read -p "Press Enter to close..."
+    read -p "Press Enter to close..."
     exit 1
 fi
 
@@ -67,7 +71,7 @@ if command -v npm &>/dev/null; then
 else
     echo -e "  ${RED}npm not found. It usually comes with Node.js.${RESET}"
     echo -e "  Please reinstall Node.js from ${CYAN}https://nodejs.org${RESET}"
-    echo ""; read -p "Press Enter to close..."
+    read -p "Press Enter to close..."
     exit 1
 fi
 

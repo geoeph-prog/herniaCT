@@ -7,8 +7,6 @@ export default merge(webpackCommon, {
   mode: 'development',
   devtool: 'inline-source-map',
   output: {
-    // web workers public path
-    // (generated at root for dev)
     workerPublicPath: '/'
   },
   entry: {
@@ -16,7 +14,7 @@ export default merge(webpackCommon, {
   },
   devServer: {
     port: 3000,
-    open: '/tests/pacs/viewer.html',
+    open: true,
     static: [
       {
         directory: './tests',
@@ -25,9 +23,10 @@ export default merge(webpackCommon, {
     ],
   },
   plugins: [
+    // Serve the viewer at the root URL /
     new HtmlWebpackPlugin({
       template: './tests/pacs/viewer.html',
-      filename: 'tests/pacs/viewer.html',
+      filename: 'index.html',
       scriptLoading: 'module',
       chunks: ['viewer'],
     }),
