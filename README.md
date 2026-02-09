@@ -9,20 +9,19 @@ Built on [dwv](https://github.com/ivmartel/dwv) (DICOM Web Viewer) - the actual 
 
 ### 1. Install (one time only)
 
-**macOS:** Double-click `install.command`
-**Windows:** Double-click `install.bat`
-**Linux terminal:** `bash install.command`
+Double-click **`install.bat`**
 
 > Requires [Node.js 18+](https://nodejs.org). The installer checks and guides you if it's missing.
 
 ### 2. Start (every time)
 
-**macOS:** Double-click `start.command`
-**Windows:** Double-click `start.bat`
-**Linux terminal:** `bash start.command`
+Double-click **`start.bat`**
 
-The viewer opens automatically in your browser at `http://localhost:3000`.
-If dependencies aren't installed yet, the start script runs the installer automatically.
+Your browser opens automatically at `http://localhost:3000`.
+Keep the black CMD window open while using the viewer.
+If dependencies aren't installed yet, start.bat installs them automatically.
+
+*macOS/Linux users: use `install.command` / `start.command` instead.*
 
 ## How to Use
 
