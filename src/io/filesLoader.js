@@ -202,16 +202,6 @@ export class FilesLoader {
     if (typeof data === 'undefined' || data.length === 0) {
       return;
     }
-    this.#storeInputData(data);
-
-    // send start event
-    this.onloadstart({
-      source: data
-    });
-
-    // create prgress handler
-    const mproghandler = new MultiProgressHandler(this.onprogress);
-    mproghandler.setNToLoad(data.length);
 
     // create loaders
     const loaders = [];
@@ -219,46 +209,62 @@ export class FilesLoader {
       loaders.push(new loaderList[m]());
     }
 
-    // find an appropriate loader
-    let dataElement = data[0];
+    // find an appropriate loader using the first file
     let loader = null;
     let foundLoader = false;
     for (let l = 0; l < loaders.length; ++l) {
       loader = loaders[l];
-      if (loader.canLoadFile(dataElement)) {
+      if (loader.canLoadFile(data[0])) {
         foundLoader = true;
-        // load options
-        loader.setOptions({
-          numberOfFiles: data.length,
-          defaultCharacterSet: this.getDefaultCharacterSet()
-        });
-        // set loader callbacks
-        // loader.onloadstart: nothing to do
-        loader.onprogress = mproghandler.getUndefinedMonoProgressHandler(1);
-        loader.onloaditem = this.onloaditem;
-        loader.onload = this.#addLoad;
-        loader.onloadend = this.#addLoadend;
-        loader.onerror = this.onerror;
-        loader.onabort = this.onabort;
-
-        // store loader
-        this.#storeLoader(loader);
-        // exit
         break;
       }
     }
     if (!foundLoader) {
-      throw new Error('No loader found for file: ' + dataElement.name);
+      throw new Error('No loader found for file: ' + data[0].name);
     }
 
-    // loop on I/O elements
+    // filter to only files the loader can handle
+    const loadableData = [];
     for (let i = 0; i < data.length; ++i) {
-      dataElement = data[i];
-
-      // check loader
-      if (!loader.canLoadFile(dataElement)) {
-        throw new Error('Input file of different type: ' + dataElement);
+      if (loader.canLoadFile(data[i])) {
+        loadableData.push(data[i]);
       }
+    }
+    if (loadableData.length === 0) {
+      throw new Error('No loadable files found');
+    }
+
+    this.#storeInputData(loadableData);
+
+    // send start event
+    this.onloadstart({
+      source: loadableData
+    });
+
+    // create progress handler
+    const mproghandler = new MultiProgressHandler(this.onprogress);
+    mproghandler.setNToLoad(loadableData.length);
+
+    // load options
+    loader.setOptions({
+      numberOfFiles: loadableData.length,
+      defaultCharacterSet: this.getDefaultCharacterSet()
+    });
+    // set loader callbacks
+    // loader.onloadstart: nothing to do
+    loader.onprogress = mproghandler.getUndefinedMonoProgressHandler(1);
+    loader.onloaditem = this.onloaditem;
+    loader.onload = this.#addLoad;
+    loader.onloadend = this.#addLoadend;
+    loader.onerror = this.onerror;
+    loader.onabort = this.onabort;
+
+    // store loader
+    this.#storeLoader(loader);
+
+    // loop on I/O elements
+    for (let i = 0; i < loadableData.length; ++i) {
+      const dataElement = loadableData[i];
 
       /**
        * The file reader.
