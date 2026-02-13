@@ -725,16 +725,8 @@ function setupFileLine() {
     folderinput.addEventListener('change', function (event) {
       const files = event.target.files;
       if (files.length !== 0) {
-        // skip known non-DICOM files
-        const skipNames = [
-          '.ds_store', 'thumbs.db', 'desktop.ini', '.gitkeep'
-        ];
-        const skipExtensions = [
-          '.txt', '.xml', '.json', '.csv', '.log', '.md',
-          '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff',
-          '.pdf', '.doc', '.docx', '.html', '.htm',
-          '.exe', '.dll', '.bat', '.sh', '.py', '.js'
-        ];
+        // DICOM-recognized extensions
+        const dicomExtensions = ['.dcm', '.dicom', '.ima'];
         const allFiles = Array.from(files);
         const dicomFiles = allFiles.filter(function (file) {
           const name = file.name.toLowerCase();
@@ -742,23 +734,23 @@ function setupFileLine() {
           if (name.startsWith('.')) {
             return false;
           }
-          // skip known non-DICOM filenames
-          if (skipNames.indexOf(name) !== -1) {
+          // skip DICOMDIR (directory listing, not image data)
+          if (name === 'dicomdir') {
             return false;
           }
-          // skip known non-DICOM extensions
+          // accept files with known DICOM extensions
           const dotIndex = name.lastIndexOf('.');
           if (dotIndex !== -1) {
             const ext = name.substring(dotIndex);
-            if (skipExtensions.indexOf(ext) !== -1) {
-              return false;
-            }
+            return dicomExtensions.indexOf(ext) !== -1;
           }
+          // accept files with no extension (common for DICOM)
           return true;
         });
         if (dicomFiles.length !== 0) {
           _app.loadFiles(dicomFiles);
         } else {
+          // fallback: try loading all files
           _app.loadFiles(allFiles);
         }
       }

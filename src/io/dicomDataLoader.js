@@ -105,8 +105,9 @@ export class DicomDataLoader {
   canLoadFile(file) {
     const ext = getFileExtension(file.name);
     const hasNoExt = (ext === null);
-    const hasDcmExt = (ext === 'dcm');
-    return hasNoExt || hasDcmExt;
+    const hasDicomExt = (ext === 'dcm' ||
+      ext === 'dicom' || ext === 'ima');
+    return hasNoExt || hasDicomExt;
   }
 
   /**
@@ -149,14 +150,15 @@ export class DicomDataLoader {
     // extension
     const ext = getFileExtension(urlObjext.pathname);
     const hasNoExt = (ext === null);
-    const hasDcmExt = (ext === 'dcm');
+    const hasDicomExt = (ext === 'dcm' ||
+      ext === 'dicom' || ext === 'ima');
     // content type (for wado url)
     const contentType = urlObjext.searchParams.get('contentType');
     const hasContentType = contentType !== null &&
       typeof contentType !== 'undefined';
     const hasDicomContentType = (contentType === 'application/dicom');
 
-    return hasContentType ? hasDicomContentType : (hasNoExt || hasDcmExt);
+    return hasContentType ? hasDicomContentType : (hasNoExt || hasDicomExt);
   }
 
   /**
