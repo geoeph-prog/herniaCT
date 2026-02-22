@@ -1,5 +1,37 @@
-node_modules/
-dist/
-*.log
+# Build artifacts
+target/
+*.class
+*.jar
+!weasis-dist/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS files
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Maven
+.m2/
+
+# Weasis cache and user prefs
+.weasis/
+
+# DICOM test data (add your DICOM folders here if needed)
+dicom/
+DICOM/
+
+# Downloaded installers
+*.msi
+*.deb
+*.rpm
+*.pkg
+
+# Logs
+*.log

@@ -1,60 +1,56 @@
-# HerniaCT - DICOM Medical Image Viewer
+# HerniaCT - DICOM Viewer for Hernia Measurement
 
-A user-friendly DICOM medical image viewer with one-click install and one-click start.
-Built on [dwv](https://github.com/ivmartel/dwv) (DICOM Web Viewer) - the actual dwv source code is included directly.
-
-**Not intended for clinical diagnostic use.**
+A custom DICOM viewer built on [Weasis v4.4.0](https://github.com/nroduit/Weasis) (open source), focused on hernia measurement and analysis tools.
 
 ## Quick Start
 
-### 1. Install (one time only)
+### Windows
+1. Run `install-weasis.bat` to download and install Weasis
+2. Run `launch-weasis.bat` to open the viewer
+3. To open a DICOM folder directly: `launch-weasis.bat "C:\path\to\dicom\folder"`
 
-Double-click **`install.bat`**
+### Linux (Debian/Ubuntu)
+1. Download the `.deb` from [Weasis v4.4.0 releases](https://github.com/nroduit/Weasis/releases/tag/v4.4.0)
+2. Install: `sudo dpkg -i weasis_4.4.0-1_amd64.deb`
+3. Run: `./launch-weasis.sh` or `./launch-weasis.sh /path/to/dicom`
 
-> Requires [Node.js 18+](https://nodejs.org). The installer checks and guides you if it's missing.
+### macOS
+1. Download the `.pkg` from [Weasis v4.4.0 releases](https://github.com/nroduit/Weasis/releases/tag/v4.4.0)
+2. Install the package
+3. Run: `./launch-weasis.sh`
 
-### 2. Start (every time)
+## Prerequisites
 
-Double-click **`start.bat`**
+- **Weasis v4.4.0** - The viewer itself (includes its own bundled JRE)
+- **For building from source**: JDK 21+, Maven 3.8.1+
 
-Your browser opens automatically at `http://localhost:3000`.
-Keep the black CMD window open while using the viewer.
-If dependencies aren't installed yet, start.bat installs them automatically.
+## Project Structure
 
-*macOS/Linux users: use `install.command` / `start.command` instead.*
+```
+herniaCT/
+  launch-weasis.bat      # Windows launcher
+  launch-weasis.sh       # Linux/macOS launcher
+  install-weasis.bat     # Windows installer helper
+  .gitignore
+  README.md
+```
 
-## How to Use
+## Building from Source
 
-1. Click **Choose File** to load DICOM files (.dcm) from your computer
-2. Use the **tools** panel to switch between:
-   - **Scroll** - scroll through CT/MRI slices
-   - **WindowLevel** - adjust brightness/contrast (click + drag)
-   - **ZoomAndPan** - zoom and pan the image
-   - **Draw** - annotate with rulers, arrows, shapes
-   - **Brush / Floodfill / Livewire** - segmentation tools
-   - **Filter** - image filters
-3. Use **Layout** dropdown to switch between single view, dual view, or MPR
-4. **Reset Views** to return to the default layout
+Weasis source code is available at https://github.com/nroduit/Weasis (tag v4.4.0).
 
-## Supported Formats
+```bash
+git clone --branch v4.4.0 https://github.com/nroduit/Weasis.git
+cd Weasis
+mvn clean install -DskipTests
+```
 
-Standard DICOM files including:
-- CT (Computed Tomography)
-- MRI (Magnetic Resonance Imaging)
-- X-Ray / CR (Computed Radiography)
-- Ultrasound
-- Mammography
-- Nuclear Medicine
+Requires JDK 21 and Maven 3.8.1+.
 
-## Requirements
+## Weasis Version
 
-- [Node.js](https://nodejs.org) 18 or later (includes npm)
-- A modern web browser (Chrome, Firefox, Edge, Safari)
-
-## Credits
-
-This viewer is built on [dwv](https://github.com/ivmartel/dwv) by ivmartel, licensed under GPL-3.0.
+This project uses **Weasis v4.4.0** (released May 2024), which requires **JDK 21**.
 
 ## License
 
-GPL-3.0 (same as dwv)
+Weasis is dual-licensed under [EPL-2.0](https://www.eclipse.org/legal/epl-2.0/) and [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0).
