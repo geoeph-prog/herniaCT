@@ -1,0 +1,274 @@
+/*
+ * Copyright (c) 2022 Weasis Team and other contributors.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
+package org.weasis.dicom.viewer3d.vr;
+
+import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES3;
+import com.jogamp.opengl.GLContext;
+import com.jogamp.opengl.util.GLPixelStorageModes;
+import java.awt.Dimension;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import javax.swing.JProgressBar;
+import jogamp.opengl.glu.error.Error;
+import org.dcm4che3.img.util.PixelDataUtils;
+import org.joml.Vector3i;
+import org.opencv.core.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.dicom.codec.*;
+import org.weasis.dicom.viewer2d.mpr.Volume;
+import org.weasis.dicom.viewer3d.ActionVol;
+import org.weasis.dicom.viewer3d.EventManager;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
+import org.weasis.opencv.data.ImageCV;
+import org.weasis.opencv.data.PlanarImage;
+
+public final class VolumeBuilder {
+  private static final Logger LOGGER = LoggerFactory.getLogger(VolumeBuilder.class);
+  private final DicomVolTexture volTexture;
+  private volatile boolean completed;
+  private volatile boolean hasError;
+  private TextureLoader textureLoader;
+
+  public VolumeBuilder(DicomVolTexture volTexture) {
+    this.volTexture = Objects.requireNonNull(volTexture);
+    this.completed = false;
+    this.hasError = false;
+  }
+
+  public static PlanarImage getSuitableImage(PlanarImage img) {
+    int channels = CvType.channels(img.type());
+    int type = CvType.depth(img.type());
+    PlanarImage unsignedImage;
+    if (type == CvType.CV_8U && channels > 1) {
+      unsignedImage = PixelDataUtils.bgr2rgb(img);
+    } else if (type == CvType.CV_16S) {
+      ImageCV dstImg = new ImageCV();
+      // Fix issue: glTexSubImage3D doesn't support signed short.
+      // So it is set as unsigned short and shift later in shader
+      img.toImageCV().convertTo(dstImg, CvType.CV_16UC(img.channels()), 1.0, 32768);
+      unsignedImage = dstImg;
+    } else {
+      unsignedImage = img;
+    }
+    return unsignedImage;
+  }
+
+  public DicomVolTexture getVolTexture() {
+    return volTexture;
+  }
+
+  public boolean isCompleted() {
+    return completed;
+  }
+
+  public boolean isHasError() {
+    return hasError;
+  }
+
+  public synchronized void start() {
+    if (textureLoader == null || hasError) {
+      hasError = false;
+      textureLoader = new TextureLoader(this);
+      textureLoader.start();
+    }
+  }
+
+  public synchronized void stop() {
+    TextureLoader moribund = textureLoader;
+    textureLoader = null;
+    completed = true;
+    if (moribund != null) {
+      moribund.interrupt();
+    }
+  }
+
+  public boolean isDone() {
+    return completed;
+  }
+
+  public boolean isRunning() {
+    return textureLoader != null;
+  }
+
+  public void reset() {
+    stop();
+    completed = false;
+  }
+
+  private static class TextureLoader extends Thread {
+    private final VolumeBuilder volumeBuilder;
+
+    public TextureLoader(VolumeBuilder volumeBuilder) {
+      super("Texture 3D loader (OpenGL)"); // NON-NLS
+      this.volumeBuilder = volumeBuilder;
+    }
+
+    public void publishVolumeInOpenGL(List<Mat> slices, int offset) {
+      if (!slices.isEmpty()) {
+        GLContext glContext = OpenglUtils.getDefaultGlContext();
+        glContext.makeCurrent();
+        GL2ES3 gl = glContext.getGL().getGL2ES3();
+        gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
+        GLPixelStorageModes storageModes = new GLPixelStorageModes();
+        storageModes.setPackAlignment(gl, 1); // buffer has not ending row space
+
+        TextureSliceDataBuffer textureSliceData = setTexImage3DBuffer(gl, slices, offset);
+        textureSliceData.releaseMemory();
+
+        storageModes.restore(gl);
+        gl.glFinish();
+        glContext.release();
+      }
+    }
+
+    private TextureSliceDataBuffer setTexImage3DBuffer(GL2ES3 gl, List<Mat> slices, int offset) {
+      DicomVolTexture volTexture = volumeBuilder.volTexture;
+      TextureSliceDataBuffer textureSliceData = TextureSliceDataBuffer.toImageData(slices);
+      if (volTexture.getId() <= 0) {
+        volTexture.init(gl);
+      }
+      // See https://docs.gl/gl4/glTexSubImage3D
+      gl.glTexSubImage3D(
+          GL2ES2.GL_TEXTURE_3D,
+          0,
+          0,
+          0,
+          offset,
+          volTexture.getWidth(),
+          volTexture.getHeight(),
+          slices.size(),
+          volTexture.getFormat(),
+          volTexture.getType(),
+          textureSliceData.buffer());
+      int error;
+      if ((error = gl.glGetError()) != 0) {
+        LOGGER.error(
+            "Cannot load volume ({} images) in OpenGL texture3D. OpenGL error: {}",
+            volTexture.getDepth(),
+            Error.gluErrorString(error));
+        volumeBuilder.hasError = true;
+        volumeBuilder.stop();
+      }
+      return textureSliceData;
+    }
+
+    @Override
+    public void run() {
+      DicomVolTexture volTexture = volumeBuilder.volTexture;
+      final int size = volTexture.getDepth();
+      List<SpecialElementRegion> segList = null;
+      ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+      ComboItemListener<Type> segType =
+          EventManager.getInstance().getAction(ActionVol.SEG_TYPE).orElse(null);
+      if (segType != null && segType.getSelectedItem() == Type.SEG_ONLY) {
+        segList = volTexture.getSegmentations();
+      }
+
+      final JProgressBar bar;
+      if (view instanceof View3d view3d) {
+        bar = new JProgressBar(0, size);
+        Dimension dim = new Dimension(view3d.getWidth() / 2, GuiUtils.getScaleLength(30));
+        bar.setSize(dim);
+        bar.setPreferredSize(dim);
+        bar.setMaximumSize(dim);
+
+        GuiExecutor.invokeAndWait(
+            () -> {
+              bar.setValue(0);
+              bar.setStringPainted(true);
+              view3d.setProgressBar(bar);
+              view3d.repaint();
+            });
+      } else {
+        bar = null;
+      }
+
+      int sliceOffset = 0;
+      long maxMemory = Runtime.getRuntime().maxMemory() / 3;
+      long sumMemory = 0L;
+
+      ArrayList<Mat> slices = new ArrayList<>(size);
+      Instant timeStarted = Instant.now();
+
+      Volume<?, ?> v = volTexture.getVolume();
+      Vector3i vSize = v.getSize();
+      double step = (double) vSize.z / volTexture.depth;
+      for (int i = volTexture.depth - 1; i >= 0; i--) {
+        if (isInterrupted()) {
+          return;
+        }
+        Instant start = Instant.now();
+        int index = (int) Math.floor(i * step);
+        PlanarImage imageMLUT = volTexture.getScaledImage(v.getAxialSlice(index));
+        LOGGER.debug(
+            "Time preparation of {}: {} ms", i, Duration.between(start, Instant.now()).toMillis());
+
+        start = Instant.now();
+        imageMLUT = getSuitableImage(imageMLUT);
+        LOGGER.debug(
+            "Time to get suitable image  {}: {} ms",
+            i,
+            Duration.between(start, Instant.now()).toMillis());
+
+        sumMemory += imageMLUT.physicalBytes();
+        if (sumMemory > maxMemory) {
+          start = Instant.now();
+          publishVolumeInOpenGL(slices, sliceOffset);
+          LOGGER.debug(
+              "Time to load volume ({} to {}) in OpenGL: {} ms",
+              sliceOffset,
+              sliceOffset + slices.size() - 1,
+              Duration.between(start, Instant.now()).toMillis());
+
+          sliceOffset += slices.size();
+          slices.clear();
+          sumMemory = imageMLUT.physicalBytes();
+
+          volTexture.notifyPartiallyLoaded();
+        }
+        slices.add(imageMLUT.toMat());
+        if (bar != null) {
+          GuiExecutor.execute(
+              () -> {
+                bar.setValue(bar.getValue() + 1);
+                view.getJComponent().repaint();
+              });
+        }
+      }
+
+      Instant start = Instant.now();
+      publishVolumeInOpenGL(slices, sliceOffset);
+      LOGGER.debug(
+          "Time to load volume ({} to {}) in OpenGL: {} ms",
+          sliceOffset,
+          sliceOffset + slices.size() - 1,
+          Duration.between(start, Instant.now()).toMillis());
+
+      LOGGER.info(
+          "Loading 3D texture time: {} ms",
+          Duration.between(timeStarted, Instant.now()).toMillis());
+      volumeBuilder.completed = true;
+
+      if (view instanceof View3d view3d) {
+        view3d.setProgressBar(null);
+        volTexture.notifyFullyLoaded();
+      }
+    }
+  }
+}
